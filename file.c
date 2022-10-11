@@ -155,3 +155,9 @@ filewrite(struct file *f, char *addr, int n)
   panic("filewrite");
 }
 
+int
+file_lseek (void)
+{
+  return 0;
+}
+
