@@ -156,8 +156,9 @@ filewrite(struct file *f, char *addr, int n)
 }
 
 int
-file_lseek (void)
+lseek (struct file *f, int offset, int whence)
 {
+  f->off=whence+offset;
   return 0;
 }
 

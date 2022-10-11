@@ -446,7 +446,26 @@ sys_pipe(void)
 int
 sys_lseek(void)
 {
-  if (file_lseek()<0)
+  int fd, offset, whence;
+  struct file *f;
+
+  if (argfd(0, &fd, &f)<0 || argint(1, &offset)<0 || argint(2, &whence)<0)
     return -1;
+
+  if (whence==SEEK_SET)
+    whence=0;
+  else if (whence==SEEK_CUR)
+    whence=f->off;
+  else if (whence==SEEK_END)
+  {
+    whence=f->ip->size;
+  }
+  else
+    return -1;
+
+  //cprintf("%d %d %d\n", fd, offset, whence);
+
+  lseek(f, offset, whence);
+
   return 0;
 }
