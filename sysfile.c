@@ -451,6 +451,10 @@ sys_lseek(void)
 
   if (argfd(0, &fd, &f)<0 || argint(1, &offset)<0 || argint(2, &whence)<0)
     return -1;
+
+  ilock(f->ip);
+  int size=f->ip->size;
+  iunlock(f->ip);
   
   if (f->type==FD_PIPE)
     return -1;
@@ -461,12 +465,12 @@ sys_lseek(void)
     whence=f->off;
   else if (whence==SEEK_END)
   {
-    whence=f->ip->size;
+    whence=size;
   }
   else
     return -1;
   
-  if (offset < 0 || offset > f->ip->size)
+  if (whence+offset < 0 || whence+offset > size)
     return -1;
 
   //cprintf("%d %d %d\n", fd, offset, whence);
