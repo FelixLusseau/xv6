@@ -446,15 +446,16 @@ sys_pipe(void)
 int
 sys_lseek(void)
 {
-  int fd, offset, whence;
+  int fd, whence;
+  uint offset;
   struct file *f;
 
-  if (argfd(0, &fd, &f)<0 || argint(1, &offset)<0 || argint(2, &whence)<0)
+  if (argfd(0, &fd, &f)<0 || argint(1, (int *)&offset)<0 || argint(2, &whence)<0)
     return -1;
 
-  ilock(f->ip);
+  //ilock(f->ip);
   int size=f->ip->size;
-  iunlock(f->ip);
+  //iunlock(f->ip);
   
   if (f->type==FD_PIPE)
     return -1;
@@ -463,15 +464,24 @@ sys_lseek(void)
     whence=0;
   else if (whence==SEEK_CUR)
     whence=f->off;
+  #if 0
   else if (whence==SEEK_END)
   {
     whence=size;
   }
+  #endif
   else
     return -1;
   
-  if (whence+offset < 0 || whence+offset > size)
-    return -1;
+  if (f->type==FD_INODE){
+    if (whence+offset < 0 || whence+offset > size)
+      return -1;
+  }
+  if (f->type==T_DEV){
+    if (whence+offset > 2e32-1)
+      return -1;
+  }
+
 
   //cprintf("%d %d %d\n", fd, offset, whence);
 
