@@ -38,9 +38,9 @@ exec(char *path, char **argv)
   if((pgdir = setupkvm()) == 0)
     goto bad;
 
-  /* pgdir[VSCADDR]=V2P(vsc_alloc(pgdir, 0));
+  pgdir[VSCADDR]=V2P(vsc_alloc(pgdir, 0));
   if(pgdir[VSCADDR]==0)
-    goto bad; */
+    goto bad;
 
   // Load program into memory.
   sz = 0;
