@@ -120,6 +120,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void*           vsc_alloc(pde_t*, int);
+void*           vsc_get(pde_t*, int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

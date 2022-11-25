@@ -174,6 +174,37 @@ growproc(int n)
   return 0;
 }
 
+void*
+vsc_alloc(pde_t *pgdir, int n)
+{
+    void* page;
+    if ((page=(void*)kalloc()) == 0){
+        kfree((char*)page);
+        return 0;
+    }
+    memset(page, 0, PGSIZE);
+
+    struct proc *p = myproc();
+    acquire(&ptable.lock);
+    p->pgdir[VSCADDR] = V2P(page) | PTE_W | PTE_U;
+    release(&ptable.lock);
+    return (void*)VSCADDR;
+}
+
+void*
+vsc_get(pde_t *pgdir, int n)
+{
+    acquire(&ptable.lock);
+    struct proc *p = myproc();
+    void* page = (void*)P2V(p->pgdir[VSCADDR]);
+    if (page == 0){
+        release(&ptable.lock);
+        return 0;
+    }
+    release(&ptable.lock);
+    return page;
+}
+
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -186,6 +217,12 @@ fork(void)
 
   // Allocate process.
   if((np = allocproc()) == 0){
+    return -1;
+  }
+
+
+  np->pgdir[VSCADDR]=V2P(vsc_alloc(np->pgdir, 0));
+  if (np->pgdir[VSCADDR] == 0){
     return -1;
   }
 
@@ -213,6 +250,9 @@ fork(void)
   pid = np->pid;
 
   acquire(&ptable.lock);
+
+  np->pgdir[VSCADDR]=pid;
+  np->pgdir[VSCADDR+4]=curproc->pid;
 
   np->state = RUNNABLE;
 
@@ -256,6 +296,7 @@ exit(void)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
       p->parent = initproc;
+      p->pgdir[VSCADDR+4]=initproc->pid;
       if(p->state == ZOMBIE)
         wakeup1(initproc);
     }
